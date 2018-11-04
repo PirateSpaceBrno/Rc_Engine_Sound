@@ -2,9 +2,10 @@
 // Choose the motor sound (uncomment the one you want)
 //#include "diesel.h"
 //#include "v8.h"
-  §#include "chevyNovaV8.h"
+//§#include "chevyNovaV8.h"
 //#include "Mustang68.h"
 //#include "LaFerrari.h"
+  §#include "skoda100.h"
 
 // Mode settings - These could easily be 4 jumpers connected to spare pins, checked at startup to determine mode
 boolean managedThrottle = true;     // Managed mode looks after the digipot if fitted for volume, and adds some mass to the engine
