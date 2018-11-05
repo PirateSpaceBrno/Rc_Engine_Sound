@@ -14,7 +14,7 @@
 */
 
 // All the required settings are done in settings.h!
-#include "settings.h" // <<------- SETTINGS
+#include "rcEngineSound.h" // <<------- SETTINGS
 
 const float codeVersion = 1.1; // Software revision
 
