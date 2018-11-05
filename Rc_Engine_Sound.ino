@@ -27,8 +27,8 @@ uint16_t curVolume = 0;                         // Current digi pot volume, used
 volatile uint16_t curEngineSample;              // Index of current loaded sample
 uint8_t  lastSample;                            // Last loaded sample
 int16_t  currentThrottle = 0;                   // 0 - 1000, a top value of 1023 is acceptable
-uint8_t  throttleByte = 0;                      // Raw throttle position in SPI mode, gets mapped to currentThrottle
-uint8_t  spiReturnByte = 0;                     // The current RPM mapped to a byte for SPI return
+//uint8_t  throttleByte = 0;                      // Raw throttle position in SPI mode, gets mapped to currentThrottle
+//uint8_t  spiReturnByte = 0;                     // The current RPM mapped to a byte for SPI return
 volatile int16_t pulseWidth = 0;                // Current pulse width when in PWM mode
 volatile boolean pulseAvailable;                  // RC signal pulses are coming in
 #define FREQ 16000000L                          // Always 16MHz, even if running on a 8MHz MCU!
@@ -41,37 +41,6 @@ volatile boolean pulseAvailable;                  // RC signal pulses are coming
 
 void setup()
 {
-  // SPI slave mode
-  pinMode(10, INPUT);  // Chip Select
-  pinMode(12, OUTPUT); // MISO pin, this is for ATMEGA328/168
-  SPCR |= _BV(SPE);// turn on SPI in slave mode
-  SPCR |= _BV(SPIE); // turn on interrupts
-
-  // MCP4131 digi pot
-  pinMode(POT_CS, OUTPUT);
-  pinMode(POT_SCK, OUTPUT);
-  pinMode(POT_SDO, OUTPUT);
-  digitalWrite(POT_CS, HIGH);
-  digitalWrite(POT_SCK, HIGH);
-  digitalWrite(POT_SDO, HIGH);
-
-  if (managedThrottle) writePot(0);
-  else writePot(DEFAULT_VOLUME);
-
-  // Analog input, we set these pins so a pot with 0.1in pin spacing can
-  // plug directly into the Arduino header, if you change POT_PIN you may
-  // want to comment them out
-  pinMode(A0, OUTPUT);
-  pinMode(A2, OUTPUT);
-  digitalWrite(A0, HIGH);
-  digitalWrite(A2, LOW);
-
-  // pwm in setup, for a standard servo pulse
-  pinMode(2, INPUT); // We don't want INPUT_PULLUP as the 5v may damage some receivers!
-  if (pwmThrottle) { // And we don't want the interrupt firing when not in pwm mode
-    attachInterrupt(0, getPulsewidth, CHANGE);
-  }
-
   // setup complete, so start making sounds
   setupPcm();
 }
@@ -83,13 +52,7 @@ void setup()
 //
 
 void loop() {
-  if (potThrottle) doPotThrottle();
-  if (pwmThrottle) {
-    doPwmThrottle();
-    noPulse();
-  }
-  if (spiThrottle) doSpiThrottle();
-  if (managedThrottle) manageSpeed();
+  doSerialLineCommandThrottle();
 }
 
 //
@@ -98,38 +61,9 @@ void loop() {
 // =======================================================================================================
 //
 
-// Potentiometer -------------------------------------------------------------------------------------
-void doPotThrottle() {
-  if (managedThrottle) {
-    currentThrottle = analogRead(POT_PIN);
-  }
-  else {
-    currentSmpleRate = FREQ / (BASE_RATE + long(analogRead(POT_PIN) * TOP_SPEED_MULTIPLIER));
-  }
-}
-
-// RC PWM signal -------------------------------------------------------------------------------------
-void doPwmThrottle() {
-
-  if (pulseWidth > 800 && pulseWidth < 2200) { // check if the pulsewidth looks like a servo pulse
-    if (pulseWidth < 1000) pulseWidth = 1000; // Constrain the value
-    if (pulseWidth > 2000) pulseWidth = 2000;
-
-    if (pulseWidth > 1550) currentThrottle = (pulseWidth - 1500) * 2; // make a throttle value from the pulsewidth 0 - 1000
-    else if (pulseWidth < 1450) currentThrottle = abs( (pulseWidth - 1500) * 2);
-    else currentThrottle = 0;
-  }
-
-  if (!managedThrottle) {
-    // The current sample rate will be written later, if managed throttle is active
-    currentSmpleRate = FREQ / (BASE_RATE + long(currentThrottle * TOP_SPEED_MULTIPLIER));
-  }
-}
-
-// SPI bus signal -----------------------------------------------------------------------------------
-void doSpiThrottle() {
-  if (managedThrottle) {
-    if (throttleByte > 0) {
+// Serial line command ------------------------------------------------------------------------------
+void doSerialLineCommandThrottle() {
+  if (throttleByte > 0) {
       if (!audioRunning) setupPcm();
       currentThrottle = throttleByte << 2;
     }
@@ -177,9 +111,9 @@ void manageSpeed() {
       prevThrottle = currentThrottle;
     }
 
-    if (currentRpm >> 2 < 255) spiReturnByte = currentRpm >> 2;
-    else spiReturnByte = 255;
-    if (currentRpm >> 2 < 0) spiReturnByte = 0;
+    //if (currentRpm >> 2 < 255) spiReturnByte = currentRpm >> 2;
+    //else spiReturnByte = 255;
+    //if (currentRpm >> 2 < 0) spiReturnByte = 0;
 
     currentSmpleRate = FREQ / (BASE_RATE + long(currentRpm * TOP_SPEED_MULTIPLIER) );
   }
@@ -327,16 +261,6 @@ void getPulsewidth() {
     pulseWidth = currentMicros - prevMicros;
     pulseAvailable = false;
     lastState = currentState;
-  }
-}
-
-// SPI slave interrupt, just stores the last byte and sends ------------------------------------------
-// current throttle when in managed mode
-// If we change to a multibyte system this will get expanded
-ISR (SPI_STC_vect) {
-  if (digitalRead(10)) {
-    throttleByte = SPDR;  // Store new byte
-    SPDR = spiReturnByte; // Queue up return byte for next transaction
   }
 }
 
