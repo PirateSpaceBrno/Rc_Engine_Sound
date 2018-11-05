@@ -117,40 +117,21 @@ void manageSpeed() {
 
     currentSmpleRate = FREQ / (BASE_RATE + long(currentRpm * TOP_SPEED_MULTIPLIER) );
   }
-
-  // Engine volume (for MCP4131 digipot only) -------------------------------------------------------
-  if (millis() - volMillis > 50) {
-    volMillis = millis();
-
-    int vol = map(currentThrottle, 0, 1023, VOL_MIN, VOL_MAX);
-
-    if (vol > curVolume) curVolume = vol;
-    else {
-      curVolume -= (curVolume / 10);
-      if (curVolume < VOL_MIN) curVolume = VOL_MIN;
-    }
-
-    int lastVolume = 0xFFFF;
-    if (curVolume != lastVolume) {
-      lastVolume = curVolume;
-      writePot(curVolume);
-    }
-  }
 }
 
 // Write pot subfunction -----------------------------------------------------------------------------
-void writePot(uint8_t data) {
+//void writePot(uint8_t data) {
   // This function should get a value from 0 - 127
   // It would be trivial to convert this to work with
   // an I2C device.
 
-  if (data > VOL_MAX) data = VOL_MAX; // cap it just in case
+  //if (data > VOL_MAX) data = VOL_MAX; // cap it just in case
 
-  digitalWrite(POT_CS, LOW);
-  shiftOut(POT_SDO, POT_SCK, MSBFIRST, 0x00);
-  shiftOut(POT_SDO, POT_SCK, MSBFIRST, data);
-  digitalWrite(POT_CS, HIGH);
-}
+  //digitalWrite(POT_CS, LOW);
+  //shiftOut(POT_SDO, POT_SCK, MSBFIRST, 0x00);
+  //shiftOut(POT_SDO, POT_SCK, MSBFIRST, data);
+  //digitalWrite(POT_CS, HIGH);
+//}
 
 //
 // =======================================================================================================
@@ -197,7 +178,7 @@ void setupPcm()
   uint8_t target = map(currentThrottle, 0, 1023, VOL_MIN, VOL_MAX); // Fadein the volume pot
   for (uint8_t i = 0; i < target; i ++) {
     curVolume = i;
-    writePot(curVolume);
+    //writePot(curVolume);
     delay(1);
   }
 }
@@ -208,7 +189,7 @@ void stopPlayback()
   // Fadeout the volume pot
   for (uint8_t i = curVolume; i > 0; i--) {
     curVolume = i;
-    writePot(i);
+    //writePot(i);
     delay(1);
   }
 
