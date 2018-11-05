@@ -7,17 +7,13 @@
 //#include "LaFerrari.h"
   §#include "skoda100.h"
 
-// Mode settings - These could easily be 4 jumpers connected to spare pins, checked at startup to determine mode
-boolean managedThrottle = true;     // Managed mode looks after the digipot if fitted for volume, and adds some mass to the engine
-boolean potThrottle = false;        // A pot connected to A1, 0-1023 sets speed
-boolean pwmThrottle = true;         // Takes a standard servo signal on pin 2 (UNO)
-boolean spiThrottle = false;        // SPI mode, is an SPI slave, expects 1-255 for throttle position, with 0 being engine off
+uint8_t  throttleByte = 0;                      // Raw throttle position in Serial Line
 
 // Pins
-#define POT_PIN A1     // Pot wiper when using pot mode
-#define POT_CS  4      // MCP4131 CS // If using a digi pot to control volume these are the pins
-#define POT_SCK 5      // MCP4131 Clock 
-#define POT_SDO 6      // MCP4131 Data
+//#define POT_PIN A1     // Pot wiper when using pot mode
+//#define POT_CS  4      // MCP4131 CS // If using a digi pot to control volume these are the pins
+//#define POT_SCK 5      // MCP4131 Clock 
+//#define POT_SDO 6      // MCP4131 Data
 
 // Volume, max. speed
 #define DEFAULT_VOLUME 127      // Volume when in non managed mode
